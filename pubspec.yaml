@@ -1,0 +1,45 @@
+name: swift_share
+description: Fast file sharing app for Android and Windows via WiFi, Bluetooth, USB
+
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # File picking & sharing
+  file_picker: ^8.0.3
+  open_file: ^3.3.2
+  path_provider: ^2.1.3
+  
+  # Networking / WiFi transfer
+  shelf: ^1.4.1
+  shelf_router: ^1.1.4
+  dio: ^5.4.3
+  network_info_plus: ^5.0.0
+  
+  # Permissions (Android/iOS only - handled gracefully on Windows)
+  permission_handler: ^11.3.1
+  
+  # UI
+  flutter_riverpod: ^2.5.1
+  go_router: ^13.2.0
+  percent_indicator: ^4.2.3
+  flutter_animate: ^4.5.0
+  
+  # Utils
+  device_info_plus: ^10.1.0
+  uuid: ^4.4.0
+  shared_preferences: ^2.2.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

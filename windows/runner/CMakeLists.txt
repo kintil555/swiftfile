@@ -22,10 +22,24 @@ endif()
 
 set(FLUTTER_MANAGED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../flutter")
 
+# Include Flutter CMake helpers (provides apply_standard_settings)
+include("${FLUTTER_MANAGED_DIR}/CMakeLists.txt" OPTIONAL)
+include("${FLUTTER_ROOT}/packages/flutter_tools/cmake/flutter_standard_settings.cmake" OPTIONAL)
 include("${FLUTTER_MANAGED_DIR}/generated_version.cmake" OPTIONAL)
 include("${FLUTTER_MANAGED_DIR}/ephemeral/generated_config.cmake" OPTIONAL)
 
 set(FLUTTER_LIBRARY "${FLUTTER_MANAGED_DIR}/ephemeral/flutter_windows.dll")
+
+# Fallback: define apply_standard_settings jika tidak ter-include dari Flutter SDK
+if(NOT COMMAND apply_standard_settings)
+  function(apply_standard_settings TARGET)
+    target_compile_features(${TARGET} PUBLIC cxx_std_17)
+    target_compile_options(${TARGET} PRIVATE /W4 /WX /wd"4100")
+    target_compile_options(${TARGET} PRIVATE /EHsc)
+    set_target_properties(${TARGET} PROPERTIES
+      MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  endfunction()
+endif()
 
 add_executable(${BINARY_NAME} WIN32
   "flutter_window.cpp"

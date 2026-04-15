@@ -11,6 +11,15 @@ if(FLUTTER_TARGET_PLATFORM_SYSROOT)
   set(CMAKE_SYSROOT ${FLUTTER_TARGET_PLATFORM_SYSROOT})
 endif()
 
+# Define apply_standard_settings (normally injected by Flutter SDK)
+function(apply_standard_settings TARGET)
+  target_compile_features(${TARGET} PUBLIC cxx_std_17)
+  target_compile_options(${TARGET} PRIVATE /W4 /WX /wd4100 /wd4267)
+  target_compile_options(${TARGET} PRIVATE /EHsc)
+  set_target_properties(${TARGET} PROPERTIES
+    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endfunction()
+
 # Build runner binary
 add_subdirectory("runner")
 

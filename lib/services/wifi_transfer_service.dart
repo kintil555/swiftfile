@@ -4,7 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:shelf/shelf.dart';
+import 'package:shelf/shelf.dart' as shelf;
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_router/shelf_router.dart';
 import 'package:uuid/uuid.dart';
@@ -16,7 +16,7 @@ class WifiTransferService {
   HttpServer? _server;
   final _networkInfo = NetworkInfo();
   final _dio = Dio();
-  
+
   // Files being served: id -> file path
   final Map<String, String> _servedFiles = {};
 
@@ -31,20 +31,20 @@ class WifiTransferService {
     final router = Router();
 
     // List available files
-    router.get('/files', (Request req) {
+    router.get('/files', (shelf.Request req) {
       final list = _servedFiles.entries.map((e) {
         final f = File(e.value);
         return '{"id":"${e.key}","name":"${f.uri.pathSegments.last}","size":${f.lengthSync()}}';
       }).join(',');
-      return Response.ok('[$list]', headers: {'Content-Type': 'application/json'});
+      return shelf.Response.ok('[$list]', headers: {'Content-Type': 'application/json'});
     });
 
     // Download a file - supports Range header for resume
-    router.get('/file/<id>', (Request req, String id) async {
+    router.get('/file/<id>', (shelf.Request req, String id) async {
       final path = _servedFiles[id];
-      if (path == null) return Response.notFound('File not found');
+      if (path == null) return shelf.Response.notFound('File not found');
       final file = File(path);
-      if (!file.existsSync()) return Response.notFound('File gone');
+      if (!file.existsSync()) return shelf.Response.notFound('File gone');
 
       final size = file.lengthSync();
       final rangeHeader = req.headers['range'];
@@ -62,7 +62,7 @@ class WifiTransferService {
       final length = end - start + 1;
       final stream = file.openRead(start, end + 1);
 
-      return Response(
+      return shelf.Response(
         rangeHeader != null ? 206 : 200,
         body: stream,
         headers: {
@@ -76,7 +76,7 @@ class WifiTransferService {
     });
 
     // Upload endpoint (push mode)
-    router.post('/upload', (Request req) async {
+    router.post('/upload', (shelf.Request req) async {
       final fileName = req.headers['x-file-name'] ?? 'file_${DateTime.now().millisecondsSinceEpoch}';
       final totalSize = int.tryParse(req.headers['content-length'] ?? '0') ?? 0;
       final fileId = const Uuid().v4();
@@ -97,12 +97,12 @@ class WifiTransferService {
       await outFile.close();
       onDone(fileId, savePath);
 
-      return Response.ok('{"id":"$fileId","path":"$savePath"}',
+      return shelf.Response.ok('{"id":"$fileId","path":"$savePath"}',
           headers: {'Content-Type': 'application/json'});
     });
 
-    final handler = const Pipeline()
-        .addMiddleware(logRequests())
+    final handler = const shelf.Pipeline()
+        .addMiddleware(shelf.logRequests())
         .addHandler(router.call);
 
     _server = await shelf_io.serve(handler, InternetAddress.anyIPv4, kServerPort);
@@ -131,7 +131,7 @@ class WifiTransferService {
       final dir = await getDownloadsDirectory() ?? await getTemporaryDirectory();
       final savePath = '${dir.path}/$fileName';
 
-      const int chunks = 4; // parallel chunks like IDM
+      const int chunks = 4;
       final chunkSize = totalSize ~/ chunks;
       final tempFiles = <String>[];
       final futures = <Future>[];
